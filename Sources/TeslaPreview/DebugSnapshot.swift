@@ -3,7 +3,32 @@ import AppKit
 
 /// Jen pro vývoj: `TP_SNAPSHOT=/cesta.png` uloží po chvíli snímek hlavního okna
 /// (bez oprávnění k nahrávání obrazovky). `TP_SOURCE` předvyplní zdroj.
+import AVFoundation
+import SwiftUI
+
+/// Snímek okna nezachytí AVPlayerLayer; pro screenshoty se místo videa vykreslí obrázek.
+struct StaticFrameView: View {
+    let asset: AVAsset
+    let time: Double
+    @State private var image: CGImage?
+
+    var body: some View {
+        ZStack {
+            Color.black
+            if let image { Image(decorative: image, scale: 1).resizable().aspectRatio(contentMode: .fit) }
+        }
+        .task(id: Int(time * 4)) {
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.requestedTimeToleranceBefore = .zero
+            generator.requestedTimeToleranceAfter = .zero
+            image = try? await generator.image(at: CMTime(seconds: time, preferredTimescale: 600)).image
+        }
+    }
+}
+
 enum DebugSnapshot {
+    static let staticFrames = ProcessInfo.processInfo.environment["TP_STATIC_FRAMES"] != nil
+
     @MainActor static func dumpPlayers(label: String) {
         guard let player = activePlayer else { print(label, "žádný přehrávač"); return }
         if let error = player.loadError { print("chyba:", error) }
@@ -29,6 +54,13 @@ enum DebugSnapshot {
                 model?.destination = URL(fileURLWithPath: dest)
                 model?.refreshPlan()
             }
+        }
+        if env["TP_FAKE_TOKEN"] != nil {
+            // Neplatný token jen pro screenshot (platnost +2 h, podpis smyšlený).
+            let exp = Int(Date().timeIntervalSince1970) + 7200
+            let payload = Data("{\"exp\":\(exp)}".utf8).base64EncodedString()
+                .replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { model?.acceptToken("eyJhbGciOiJub25lIn0.\(payload).c2ln") }
         }
         if env["TP_SCREEN"] == "cleanup" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { model?.screen = .cleanup }

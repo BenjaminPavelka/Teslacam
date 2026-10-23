@@ -24,7 +24,7 @@ struct UnlockView: View {
         Section {
             HStack {
                 if let url = model.sourceURL {
-                    Label(url.path, systemImage: "folder").lineLimit(1).truncationMode(.middle)
+                    Label(Format.path(url), systemImage: "folder").lineLimit(1).truncationMode(.middle)
                 } else {
                     Text("Zatím nevybráno").foregroundStyle(.secondary)
                 }
@@ -108,7 +108,7 @@ struct UnlockView: View {
     private var destinationSection: some View {
         Section("Cíl") {
             HStack {
-                Label(model.destination.path, systemImage: "externaldrive").lineLimit(1).truncationMode(.middle)
+                Label(Format.path(model.destination), systemImage: "externaldrive").lineLimit(1).truncationMode(.middle)
                 Spacer()
                 Button("Otevřít") { NSWorkspace.shared.open(model.destination) }
                     .disabled(!FileManager.default.fileExists(atPath: model.destination.path))

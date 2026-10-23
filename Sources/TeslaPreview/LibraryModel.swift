@@ -178,6 +178,18 @@ extension Format {
         date.formatted(Date.FormatStyle(date: .omitted, time: .standard).locale(czech))
     }
 
+    /// Cesta pro zobrazení, domovská složka jako `~`.
+    static func path(_ url: URL) -> String {
+        var text = (url.path as NSString).abbreviatingWithTildeInPath
+        #if DEBUG
+        // Pro screenshoty: TP_PATH_ALIAS="/dlouha/cesta=>~/Kratsi"
+        if let alias = ProcessInfo.processInfo.environment["TP_PATH_ALIAS"]?.components(separatedBy: "=>"), alias.count == 2 {
+            text = text.replacingOccurrences(of: alias[0], with: alias[1])
+        }
+        #endif
+        return text
+    }
+
     /// České skloňování podle počtu: 1 soubor, 2–4 soubory, 5+ souborů.
     static func count(_ n: Int, _ one: String, _ few: String, _ many: String) -> String {
         "\(n) " + (n == 1 ? one : (2...4).contains(n) ? few : many)

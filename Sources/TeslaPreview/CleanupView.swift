@@ -102,7 +102,7 @@ struct CleanupView: View {
         Section {
             HStack {
                 if let url = app.sourceURL {
-                    Label(url.path, systemImage: "folder").lineLimit(1).truncationMode(.middle)
+                    Label(Format.path(url), systemImage: "folder").lineLimit(1).truncationMode(.middle)
                 } else {
                     Text("Zdroj není vybraný").foregroundStyle(.secondary)
                 }

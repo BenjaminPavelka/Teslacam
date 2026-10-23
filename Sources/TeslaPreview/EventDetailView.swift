@@ -378,7 +378,15 @@ struct CameraGrid: View {
     private func tile(_ camera: Camera) -> some View {
         ZStack(alignment: .topLeading) {
             if let p = player.players[camera] {
+                #if DEBUG
+                if DebugSnapshot.staticFrames, let asset = p.currentItem?.asset {
+                    StaticFrameView(asset: asset, time: player.currentTime)
+                } else {
+                    PlayerLayerView(player: p)
+                }
+                #else
                 PlayerLayerView(player: p)
+                #endif
             } else {
                 Color.black
             }
