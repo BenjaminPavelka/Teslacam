@@ -47,6 +47,12 @@ public struct SourceFile: Sendable, Identifiable {
     }
 
     public var isVideo: Bool { url.pathExtension.lowercased() == "mp4" }
+
+    /// Otisk šifrovaného souboru, viz `Manifest.Entry.fingerprint`.
+    public var fingerprint: String? {
+        guard case .encryptedVideo(let h) = kind else { return nil }
+        return "\(h.keyID)-\(h.timestamp)-\(h.wrappedKey.base64EncodedString())"
+    }
 }
 
 public struct ScanResult: Sendable {

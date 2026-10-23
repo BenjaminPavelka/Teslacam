@@ -72,11 +72,7 @@ struct RootView: View {
             switch model.screen ?? .unlock {
             case .unlock: UnlockView()
             case .library: LibraryView()
-            case .cleanup:
-                ContentUnavailableView(
-                    "Připravujeme", systemImage: "hammer",
-                    description: Text("Tahle část přijde v dalším kroku.")
-                )
+            case .cleanup: CleanupView()
             }
         }
     }

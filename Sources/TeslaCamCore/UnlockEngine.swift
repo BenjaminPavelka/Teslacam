@@ -56,6 +56,8 @@ public struct UnlockPlan: Sendable {
     public var incomplete: [SourceFile] = []
     public var locked: [SourceFile] = []
     public var damaged: [(file: SourceFile, error: ContainerError)] = []
+    /// Soubory, které uživatel z odemčené složky smazal; znovu se neodemykají.
+    public var deletedByUser: [SourceFile] = []
 
     /// Místo, které výsledek zabere, plus rezerva na dočasné soubory remuxu.
     public var requiredBytes: UInt64 {
@@ -68,8 +70,13 @@ public struct UnlockPlan: Sendable {
 
     public init(scan: ScanResult, options: UnlockOptions) {
         let fm = FileManager.default
+        let deleted = DeletedLog.load(from: options.destination)
         for file in scan.files where options.categories.contains(file.category) {
             if let only = options.only, !only.contains(file.relativePath) { continue }
+            if deleted.paths[file.relativePath] != nil {
+                deletedByUser.append(file)
+                continue
+            }
             let target = options.destination.appendingPathComponent(file.relativePath)
             switch file.kind {
             case .incompleteVideo: incomplete.append(file)
@@ -224,7 +231,8 @@ public enum UnlockEngine {
     static func manifestEntry(_ file: SourceFile, _ outcome: FileOutcome) -> Manifest.Entry? {
         func entry(_ status: Manifest.Status, size: UInt64? = nil, remuxed: Bool? = nil, reason: String? = nil) -> Manifest.Entry {
             Manifest.Entry(status: status, sourcePath: file.url.path, sourceSize: file.size,
-                           outputSize: size, remuxed: remuxed, reason: reason, updated: Date())
+                           outputSize: size, remuxed: remuxed, reason: reason, updated: Date(),
+                           fingerprint: file.fingerprint)
         }
         switch outcome {
         case .unlocked(let bytes, let remuxed, let note): return entry(.unlocked, size: bytes, remuxed: remuxed, reason: note)

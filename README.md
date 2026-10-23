@@ -9,6 +9,7 @@ macOS aplikace (SwiftUI, Apple Silicon) na odemčení, prohlížení, stříhán
 - **Knihovna** událostí s náhledy, filtry, štítky, poznámkami a označením ponechat/smazat.
 - **Přehrávač** všech 6 kamer synchronně, minutové soubory navazují jako jeden celek.
 - **Telemetrie** z videa (H.264 SEI, firmware 2025.44.25+): rychlost, plyn, brzda, volant, blinkry, převodový stupeň, FSD / Autosteer / TACC, GPS. Zobrazuje se nad videem, v grafu rychlosti a na mapě trasy.
+- **Úklid**: označené události do Koše (a zapamatování, aby se znovu neodemkly); smazání šifrovaných originálů ze zdroje nebo flashky jen tehdy, když je odemčené video ověřené (shoda podle klíče v hlavičce), vždy až po potvrzení se seznamem.
 - **Střih a export**: označení úseku (klávesy I/O), uložení výřezu jako nové události, export všech kamer, přední kamery (bez ztráty kvality, s telemetrií) nebo mozaiky.
 
 ## Sestavení

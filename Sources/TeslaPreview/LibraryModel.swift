@@ -178,6 +178,14 @@ extension Format {
         date.formatted(Date.FormatStyle(date: .omitted, time: .standard).locale(czech))
     }
 
+    /// České skloňování podle počtu: 1 soubor, 2–4 soubory, 5+ souborů.
+    static func count(_ n: Int, _ one: String, _ few: String, _ many: String) -> String {
+        "\(n) " + (n == 1 ? one : (2...4).contains(n) ? few : many)
+    }
+
+    static func files(_ n: Int) -> String { count(n, "soubor", "soubory", "souborů") }
+    static func events(_ n: Int) -> String { count(n, "událost", "události", "událostí") }
+
     static func minutes(_ seconds: Double) -> String {
         seconds < 60 ? "\(Int(seconds.rounded())) s" : "\(Int((seconds / 60).rounded())) min"
     }

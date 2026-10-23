@@ -93,7 +93,7 @@ struct LibraryView: View {
                     .fixedSize()
             }
             let c = library.counts
-            Text("\(library.events.count) událostí · ponechat \(c.keep) · smazat \(c.delete) · nerozhodnuto \(c.undecided)")
+            Text("\(Format.events(library.events.count)) · ponechat \(c.keep) · smazat \(c.delete) · nerozhodnuto \(c.undecided)")
                 .font(.caption).foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }

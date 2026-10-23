@@ -16,6 +16,9 @@ public struct Manifest: Codable, Sendable {
         public var remuxed: Bool?
         public var reason: String?
         public var updated: Date
+        /// Otisk šifrované hlavičky (unikátní wrapped key). Podle něj se pozná stejný
+        /// originál i v jiné složce, třeba na flashce, ze které se kopírovalo.
+        public var fingerprint: String?
     }
 
     public var version = 1
@@ -39,6 +42,35 @@ public struct Manifest: Codable, Sendable {
             at: target.deletingLastPathComponent(), withIntermediateDirectories: true,
             attributes: [.posixPermissions: 0o700]
         )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(self).write(to: target, options: .atomic)
+    }
+}
+
+/// Soubory, které uživatel z odemčené složky smazal (relativní cesty). Další odemykání
+/// je neobnoví a úklid zdroje smí smazat i jejich originály.
+public struct DeletedLog: Codable, Sendable {
+    public var version = 1
+    public var paths: [String: Date] = [:]
+
+    public init() {}
+
+    public static func url(in destination: URL) -> URL {
+        destination.appendingPathComponent(".tesla-preview/deleted.json")
+    }
+
+    public static func load(from destination: URL) -> DeletedLog {
+        guard let data = try? Data(contentsOf: url(in: destination)) else { return DeletedLog() }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return (try? decoder.decode(DeletedLog.self, from: data)) ?? DeletedLog()
+    }
+
+    public func save(to destination: URL) throws {
+        let target = Self.url(in: destination)
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]

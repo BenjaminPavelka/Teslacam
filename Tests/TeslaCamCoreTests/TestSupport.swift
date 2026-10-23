@@ -19,6 +19,34 @@ enum Sample {
         return out
     }
 
+    /// Minimální platné MP4: ftyp, mdat se `samples` snímky a moov s tabulkami vzorků.
+    /// Celková velikost = `size` (doplní se do mdat), aby šlo vyrobit soubory různých velikostí.
+    static func validMP4(size: Int, seed: UInt8 = 1, samples: Int = 10) -> Data {
+        func box(_ type: String, _ body: Data) -> Data {
+            var d = Data(); d.putBE32(UInt32(8 + body.count)); d.append(Data(type.utf8)); d.append(body); return d
+        }
+        func full(_ type: String, _ body: Data) -> Data { box(type, Data(count: 4) + body) }
+        func be(_ values: [UInt32]) -> Data { var d = Data(); values.forEach { d.putBE32($0) }; return d }
+
+        let ftyp = box("ftyp", Data("isom".utf8) + be([0x200]) + Data("isomavc1".utf8))
+        func moov(mdatStart: Int, sampleSize: Int) -> Data {
+            let mdhd = full("mdhd", be([0, 0, 1000, UInt32(samples * 100), 0]))
+            let hdlr = full("hdlr", be([0]) + Data("vide".utf8) + be([0, 0, 0]) + Data([0]))
+            let stts = full("stts", be([1, UInt32(samples), 100]))
+            let stsc = full("stsc", be([1, 1, UInt32(samples), 1]))
+            let stsz = full("stsz", be([UInt32(sampleSize), UInt32(samples)]))
+            let stco = full("stco", be([1, UInt32(mdatStart)]))
+            let stss = full("stss", be([1, 1]))
+            let stbl = box("stbl", stts + stsc + stsz + stco + stss)
+            return box("moov", box("trak", box("mdia", mdhd + hdlr + box("minf", stbl))))
+        }
+        let overhead = ftyp.count + 8 + moov(mdatStart: 0, sampleSize: 0).count
+        let payload = max(samples, size - overhead)
+        let sampleSize = payload / samples
+        let body = Data((0..<payload).map { UInt8(truncatingIfNeeded: $0 &* 13) ^ seed })
+        return ftyp + box("mdat", body) + moov(mdatStart: ftyp.count + 8, sampleSize: sampleSize)
+    }
+
     static func clip(plain: Data, key: Data, wrapped: Data = wrappedKey(1), keyID: UInt32 = 1) -> Data {
         var header = Data(count: 4096)
         header.putBE(UInt64(plain.count), at: 0)
@@ -101,6 +129,8 @@ enum Sample {
 }
 
 extension Data {
+    mutating func putBE32(_ value: UInt32) { Swift.withUnsafeBytes(of: value.bigEndian) { append(contentsOf: $0) } }
+
     mutating func putBE<T: FixedWidthInteger>(_ value: T, at offset: Int) {
         let bytes = Swift.withUnsafeBytes(of: value.bigEndian) { Array($0) }
         replaceSubrange(offset..<offset + bytes.count, with: bytes)

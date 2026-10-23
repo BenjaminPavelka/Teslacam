@@ -88,6 +88,10 @@ struct UnlockView: View {
                     Label("K odemčení \(plan.toUnlock.count)", systemImage: "lock.open")
                     Label("Ke zkopírování \(plan.toCopy.count)", systemImage: "doc.on.doc")
                     Label("Už hotovo \(plan.alreadyDone.count)", systemImage: "checkmark.circle")
+                    if !plan.deletedByUser.isEmpty {
+                        Label("Smazané v knihovně \(plan.deletedByUser.count)", systemImage: "trash")
+                            .help("Tyhle soubory jsi smazal v knihovně, znovu se neodemykají.")
+                    }
                     if !plan.locked.isEmpty {
                         Label("Zamčené doplňky \(plan.locked.count)", systemImage: "lock")
                             .help(Messages.locked)
@@ -184,7 +188,7 @@ struct UnlockView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         ProgressView(value: Double(model.runDoneBytes), total: Double(max(1, model.runTotalBytes)))
                         HStack {
-                            Text("\(model.runDoneFiles) / \(model.runTotalFiles) souborů")
+                            Text("\(model.runDoneFiles) / \(Format.files(model.runTotalFiles))")
                             Text("·")
                             Text("\(Format.bytes(model.runDoneBytes)) / \(Format.bytes(model.runTotalBytes))")
                             if let speed = model.throughput {
@@ -222,8 +226,8 @@ struct UnlockView: View {
 
     private var startTitle: String {
         guard let plan = model.plan else { return "Odemknout" }
-        if case .finished(.tokenExpired) = model.phase { return "Pokračovat (\(plan.workCount) souborů)" }
-        return "Odemknout \(plan.workCount) souborů"
+        if case .finished(.tokenExpired) = model.phase { return "Pokračovat (\(Format.files(plan.workCount)))" }
+        return "Odemknout \(Format.files(plan.workCount))"
     }
 
     // MARK: Souhrn

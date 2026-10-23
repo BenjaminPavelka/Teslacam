@@ -30,6 +30,9 @@ enum DebugSnapshot {
                 model?.refreshPlan()
             }
         }
+        if env["TP_SCREEN"] == "cleanup" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { model?.screen = .cleanup }
+        }
         if env["TP_SCREEN"] == "library" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { model?.screen = .library }
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { model?.library.selection = model?.library.events.first?.id }
